@@ -13,5 +13,8 @@ export default defineConfig({
                 rewrite: (path) => path.replace(/^\/api/, ""), // Remove '/api' prefix when forwarding
             },
         },
+        watch: {
+            ignored: ["server/**", "cache"],
+        },
     },
 });
