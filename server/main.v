@@ -72,6 +72,11 @@ pub fn (app &App) index(mut ctx Context) veb.Result {
 	return ctx.text('Pokemon project server')
 }
 
+@['/favicon.ico']
+pub fn (app &App) favicon(mut ctx Context) veb.Result {
+	return ctx.not_found()
+}
+
 @['/no_cache/:path...']
 pub fn (app &App) no_cache_proxy(mut ctx Context, path string) veb.Result {
 	if path == '' {
