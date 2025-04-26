@@ -1,10 +1,12 @@
 <script lang="ts">
   import Map from "./lib/Map.svelte";
+  import PokeBox from "./lib/PokeBox.svelte";
 </script>
 
 <main>
   <div class="main">
     <Map />
+    <PokeBox />
   </div>
 </main>
 
