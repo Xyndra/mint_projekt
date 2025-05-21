@@ -43,14 +43,14 @@ fn url_to_file_name(url string) string {
 fn fetch_from_api(url string) (string, bool) {
 	if url.contains('/img/') {
 		result := http.get('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/' +
-			url.replace_once('/img/', '/')) or { panic('http error') }
+			url.replace_once('/img/', '/')) or { return 'img fetching error', false }
 		if result.status_code != 200 {
 			return result.body, false
 		}
 		save_cache(result.body, url_to_file_name(url))
 		return result.body, true
 	}
-	result := http.get('https://pokeapi.co/api/v2/' + url) or { panic('http error') }
+	result := http.get('https://pokeapi.co/api/v2/' + url) or { return 'api fetching error', false }
 	body := result.body.replace('https://pokeapi.co/api/v2/', '').replace('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/',
 		'img/')
 	save_cache(body, url_to_file_name(url))

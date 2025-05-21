@@ -26,4 +26,6 @@ dist-ssr
 package-lock.json
 pnpm-lock.yaml
 
-cache
+cache/*
+!cache/_img_pokemon_0.png
+!cache/_img_pokemon_shiny_0.png
