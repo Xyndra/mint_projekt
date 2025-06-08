@@ -1,6 +1,7 @@
 import type { Player } from "./game";
 import {
     drawTwoItemCards,
+    healOrChange,
     encounterWildPokemon,
     randomEvent,
 } from "./mapEvents";
@@ -187,6 +188,7 @@ const rawMapPoints: RawMapPoint[] = [
         kind: "city",
         city_name: "Azuria City",
         text: "Heile ein Pokemon oder Würfel eine 1 oder 6, um alle Pokemon zu heilen",
+        oneTimeModifier: healOrChange,
         path: "a",
     },
     {
@@ -258,6 +260,7 @@ const rawMapPoints: RawMapPoint[] = [
         kind: "city",
         city_name: "Lavandia",
         text: "Ziehe 2 Item Karten",
+        oneTimeModifier: drawTwoItemCards,
         path: "b",
     },
     {
@@ -280,15 +283,283 @@ const rawMapPoints: RawMapPoint[] = [
         kind: "city",
         city_name: "Saffronia City",
         text: "Ziehe 2 Item Karten",
+        oneTimeModifier: drawTwoItemCards,
         path: "c",
     },
     {
+        x: 1556,
+        y: 879,
+        kind: "catch",
+        color: "#087c31",
+        path: "d",
+    },
+    {
+        x: 1472,
+        y: 698,
+        kind: "event",
+        color: "#087c31",
+        path: "d",
+    },
+    {
         x: 1232,
-        y: 764,
+        y: 730,
         kind: "city",
         city_name: "Prismania City",
         text: "Ziehe 2 Item Karten",
+        oneTimeModifier: drawTwoItemCards,
         path: "d",
+    },
+    {
+        x: 930,
+        y: 830,
+        kind: "catch",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 910,
+        y: 980,
+        kind: "catch",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 910,
+        y: 1130,
+        kind: "catch",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 910,
+        y: 1280,
+        kind: "event",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 910,
+        y: 1430,
+        kind: "catch",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 910,
+        y: 1580,
+        kind: "event",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 1178,
+        y: 1698,
+        kind: "catch",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 1316,
+        y: 1803,
+        kind: "event",
+        color: "#d7322c",
+        path: "d",
+    },
+    {
+        x: 1627,
+        y: 1755,
+        kind: "city",
+        city_name: "Fuchsania City",
+        text: "Ziehe 2 Item Karten",
+        oneTimeModifier: drawTwoItemCards,
+        path: "f",
+    },
+    {
+        x: 1643,
+        y: 2000,
+        kind: "catch",
+        color: "#d7322c",
+        path: "f",
+    },
+    {
+        x: 1474,
+        y: 2100,
+        kind: "catch",
+        color: "#d7322c",
+        path: "f",
+    },
+    {
+        x: 1209,
+        y: 2106,
+        kind: "event",
+        color: "#d7322c",
+        path: "f",
+    },
+    {
+        x: 942,
+        y: 2129,
+        kind: "event",
+        color: "#d7322c",
+        path: "f",
+    },
+    {
+        x: 644,
+        y: 2108,
+        kind: "event",
+        color: "#d7322c",
+        path: "f",
+    },
+    {
+        x: 846,
+        y: 1904,
+        kind: "city",
+        city_name: "Zinnoberinsel",
+        text: "Ziehe 2 Item Karten",
+        oneTimeModifier: drawTwoItemCards,
+        path: "f",
+    },
+    {
+        x: 1689,
+        y: 1011,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "g",
+    },
+
+    {
+        x: 1886,
+        y: 996,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "g",
+    },
+    {
+        x: 1886,
+        y: 1213,
+        kind: "city",
+        city_name: "Orania City",
+        text: "Heile ein Pokemon oder Würfel eine 1 oder 6, um alle Pokemon zu heilen",
+        oneTimeModifier: healOrChange,
+        path: "g",
+    },
+    {
+        x: 2115,
+        y: 1187,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "g",
+    },
+    {
+        x: 2209,
+        y: 1037,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "h",
+    },
+    {
+        x: 2394,
+        y: 1036,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "h",
+    },
+    {
+        x: 2249,
+        y: 1270,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "i",
+    },
+    {
+        x: 2410,
+        y: 1259,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "i",
+    },
+    {
+        x: 2534,
+        y: 1151,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "i",
+    },
+    {
+        x: 2650,
+        y: 960,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "j",
+    },
+    {
+        x: 2727,
+        y: 1085,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "j",
+    },
+    {
+        x: 2737,
+        y: 1236,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "j",
+    },
+    {
+        x: 2686,
+        y: 1404,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "k",
+    },
+    {
+        x: 2534,
+        y: 1393,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "k",
+    },
+    {
+        x: 2372,
+        y: 1500,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "k",
+    },
+    {
+        x: 2368,
+        y: 1656,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "k",
+    },
+    {
+        x: 2207,
+        y: 1762,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "k",
+    },
+    {
+        x: 2052,
+        y: 1676,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "k",
+    },
+    {
+        x: 1981,
+        y: 1852,
+        kind: "catch",
+        color: "#2C4AA0",
+        path: "k",
+    },
+    {
+        x: 1852,
+        y: 1762,
+        kind: "event",
+        color: "#2C4AA0",
+        path: "k",
     },
 ];
 
@@ -308,6 +579,15 @@ function generateConnectedMapPoints(): MapPoint[] {
     generator.connectPaths("c", "end", "d", "start");
     generator.connectPaths("b", "end", "e", "start");
     generator.connectPaths("e", "end", "c", "end");
+    generator.connectPaths("d", "end", "f", "start");
+    generator.connectPaths("c", "end", "g", "start");
+    generator.connectPaths("g", "end", "h", "start");
+    generator.connectPaths("g", "end", "i", "start");
+    generator.connectPaths("h", "end", "i", "end");
+    generator.connectPaths("b", "end", "j", "start");
+    generator.connectPaths("i", "end", "j", "end");
+    generator.connectPaths("j", "end", "k", "start");
+    generator.connectPaths("k", "end", "f", "start");
 
     const pointsWithConnections = generator.generateMapPoints();
 

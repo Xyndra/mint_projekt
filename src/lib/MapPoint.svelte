@@ -31,7 +31,8 @@
         <div
             class="flex flex-col justify-center items-center border-black bg-[#fffc]"
             style={`
-                transform: translate(-50%, -50%);
+                margin-left: ${-150 * scaleFactor}px;
+                margin-top: ${-85 * scaleFactor}px;
                 font-size: ${34 * scaleFactor}px;
                 border-width: ${2 * scaleFactor}px;
                 border-radius: 0 0 ${14 * scaleFactor}px ${14 * scaleFactor}px;
@@ -65,7 +66,8 @@
                 background-color: ${color};
                 width: ${baseSize * scaleFactor}px;
                 height: ${baseSize * scaleFactor}px;
-                transform: translate(-50%, -50%);
+                margin-left: ${-(baseSize * scaleFactor) / 2}px;
+                margin-top: ${-(baseSize * scaleFactor) / 2}px;
             `}
         >
             {#if kind === "catch"}

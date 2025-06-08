@@ -134,6 +134,7 @@
     let mapWidth = $state(1);
     let mapHeight = $state(1);
     let scaleFactor = $derived(mapWidth / 3200);
+    let direction_x = $state(false);
 
     // Development grid settings
     let showGrid = $state(false); // Set to false for production
@@ -154,9 +155,11 @@
         if (width / 3200 > height / 2212) {
             mapWidth = width;
             mapHeight = 2212 * (width / 3200);
+            direction_x = false; // Enable vertical scrolling
         } else {
             mapHeight = height;
             mapWidth = 3200 * (height / 2212);
+            direction_x = true; // Enable horizontal scrolling
         }
     }
 
@@ -188,7 +191,7 @@
             x,
             y,
             kind: currentKind,
-            color: "#087c31",
+            color: "#2C4AA0",
             path: "a",
         };
         const coordText = JSON.stringify(pointData, null, 2) + ",\n";
@@ -314,7 +317,14 @@
     </div>
 {/if}
 
-<div id="outer" class="overflow-auto w-full h-full">
+<div
+    id="outer"
+    class="w-full h-full"
+    class:overflow-x-hidden={!direction_x}
+    class:overflow-y-auto={!direction_x}
+    class:overflow-x-auto={direction_x}
+    class:overflow-y-hidden={direction_x}
+>
     <div
         aria-hidden="true"
         class="relative map-container block w-full text-left"
@@ -322,9 +332,16 @@
         onclick={handleMapClick}
         onkeydown={handleKeyDown}
     >
-        <div style={`width: ${mapWidth}px; height: ${mapHeight}px;`}>
+        <div
+            class="flex"
+            style={`width: ${mapWidth}px; height: ${mapHeight}px;`}
+        >
             <div class="relative inline-block">
-                <img src={kanto} alt="Kanto Map" class="inline" />
+                <img
+                    src={kanto}
+                    alt="Kanto Map"
+                    style="width: {mapWidth}px; height: {mapHeight}px;"
+                />
                 <div
                     class="absolute inset-0 bg-white opacity-10 pointer-events-none"
                 ></div>
