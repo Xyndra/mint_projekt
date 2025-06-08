@@ -469,16 +469,8 @@
             class="absolute top-0 left-0 pointer-events-none"
             style={`width: ${mapWidth}px; height: ${mapHeight}px;`}
         >
-            {#each mapPoints as point}
-                <MapPoint
-                    x={point.x}
-                    y={point.y}
-                    kind={point.kind}
-                    city_name={point.city_name}
-                    text={point.text}
-                    color={point.color}
-                    {mapWidth}
-                />
+            {#each mapPoints as point, index}
+                <MapPoint {point} id={index} scale={scaleFactor} />
             {/each}
         </div>
     </div>

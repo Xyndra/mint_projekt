@@ -1,4 +1,4 @@
-import type { Player } from "./game";
+import type { Player } from "./game.svelte";
 
 // Modifier functions defined separately
 export const drawTwoItemCards = (player: Player) => {

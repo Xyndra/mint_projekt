@@ -1,14 +1,11 @@
-type Pokemon = {
-    name: string;
-    attack: number;
-    health: number;
-};
+import type { Pokemon } from "./pokemon";
+import type { PlayerKind } from "../lib/PlayerDisplay.svelte";
 
 type Item = "potion" | "revive" | "berry";
 
 export type Player = {
     name: string;
-    avatar: string;
+    avatar: PlayerKind;
     position: number;
     pokemons: Pokemon[];
     items: Item[];
@@ -20,7 +17,7 @@ type GameMap = {
     points: Map<number, MapPoint>;
 };
 
-type GameState = {
+export type GameState = {
     players: Player[];
     map: GameMap;
     currentPlayerIndex: number;
@@ -28,15 +25,44 @@ type GameState = {
     winner?: Player;
 };
 
-var gameState: GameState = {
-    players: [],
+export var gameState: GameState = $state({
+    players: [
+        {
+            name: "Player 1",
+            avatar: "ash",
+            position: 1,
+            pokemons: [],
+            items: [],
+        },
+        {
+            name: "Player 2",
+            avatar: "gary",
+            position: 2,
+            pokemons: [],
+            items: [],
+        },
+        {
+            name: "Player 3",
+            avatar: "giovanni",
+            position: 0,
+            pokemons: [],
+            items: [],
+        },
+        {
+            name: "Player 4",
+            avatar: "serena",
+            position: 0,
+            pokemons: [],
+            items: [],
+        },
+    ],
     map: {
         points: new Map<number, MapPoint>(),
     },
-    currentPlayerIndex: 0,
-};
+    currentPlayerIndex: 1,
+});
 
-export function addPlayer(name: string, avatar: string): void {
+export function addPlayer(name: string, avatar: PlayerKind): void {
     if (gameState.players.length >= 4) {
         throw new Error("Maximum number of players reached");
     } else if (gameState.players.some((player) => player.name === name)) {

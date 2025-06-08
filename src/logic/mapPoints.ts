@@ -1,4 +1,4 @@
-import type { Player } from "./game";
+import type { Player } from "./game.svelte";
 import {
     drawTwoItemCards,
     healOrChange,
