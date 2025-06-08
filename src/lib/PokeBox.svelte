@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { createPokemon } from "../logic/pokemon";
     import Pokemon from "./PokemonDisplay.svelte";
 
     function range(start: number, end: number) {
@@ -9,15 +10,22 @@
 <div class="m-4 h-full">
     <h1 class="text-4xl text-nowrap">Pokemon Box</h1>
     <div class="grid grid-cols-2 gap-x-2">
-        <Pokemon pokedex_number={1} />
-        <Pokemon pokedex_number={2} shiny={true} />
-        <Pokemon pokedex_number={1009} />
+        {#await createPokemon(1) then pokemon}
+            <Pokemon {pokemon} />
+        {/await}
+        {#await createPokemon(2) then pokemon}
+            <Pokemon {pokemon} />
+        {/await}
+        {#await createPokemon(1002) then pokemon}
+            <Pokemon {pokemon} />
+        {/await}
         {#each range(18, 25) as id}
-            <Pokemon pokedex_number={id} />
+            {#await createPokemon(id) then pokemon}
+                <Pokemon {pokemon} />
+            {/await}
         {/each}
-        <Pokemon
-            pokedex_number={Math.round(Math.random() * 1025)}
-            shiny={true}
-        />
+        {#await createPokemon(Math.round(Math.random() * 1025), true) then pokemon}
+            <Pokemon {pokemon} />
+        {/await}
     </div>
 </div>
