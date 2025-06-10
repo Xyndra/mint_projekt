@@ -36,6 +36,14 @@ function loadLocalPlayer(): string | undefined {
 // Syncable state type (excludes map)
 export type SyncableGameState = Omit<Omit<GameState, "map">, "localPlayer">;
 
+// Track sync state to prevent loops
+let isSyncing = false;
+let lastSyncedState: string | null = null;
+
+// Track local state changes with device-local timestamps
+let lastLocalStateChange: number = 0;
+let lastSyncFromServer: number = 0;
+
 // Serialize game state for syncing (excluding map)
 function serializeGameState(gameState: GameState): string {
     const syncableState: SyncableGameState = {
@@ -44,8 +52,25 @@ function serializeGameState(gameState: GameState): string {
         hasStarted: gameState.hasStarted,
         winner: gameState.winner,
         movementPhase: gameState.movementPhase,
+        catchingPhase: gameState.catchingPhase,
     };
     return JSON.stringify(syncableState);
+}
+
+// Check if state has changed since last sync
+function hasStateChanged(gameState: GameState): boolean {
+    const currentState = serializeGameState(gameState);
+    return currentState !== lastSyncedState;
+}
+
+// Mark that local state has been changed
+function markLocalStateChange(): void {
+    lastLocalStateChange = Date.now();
+}
+
+// Check if we have newer local changes than last server sync
+function hasNewerLocalChanges(): boolean {
+    return lastLocalStateChange > lastSyncFromServer;
 }
 
 // Deserialize and merge game state from server (excluding map)
@@ -55,6 +80,25 @@ function deserializeGameState(
     overwriteState: boolean,
 ): void {
     try {
+        // Prevent sync loops by checking if we're already syncing
+        if (isSyncing) {
+            return;
+        }
+
+        // Don't update if the state hasn't actually changed
+        if (data === lastSyncedState) {
+            return;
+        }
+
+        // Don't overwrite newer local changes with older server data
+        if (hasNewerLocalChanges() && !overwriteState) {
+            console.log(
+                "Skipping state load - local changes are newer than server data",
+            );
+            return;
+        }
+
+        isSyncing = true;
         const syncableState: SyncableGameState = JSON.parse(data);
         if (overwriteState) {
             setGameState(syncableState);
@@ -64,29 +108,46 @@ function deserializeGameState(
             gameState.hasStarted = syncableState.hasStarted;
             gameState.winner = syncableState.winner;
             gameState.movementPhase = syncableState.movementPhase;
+            gameState.catchingPhase = syncableState.catchingPhase;
         }
+        lastSyncedState = data;
+        lastSyncFromServer = Date.now();
+        isSyncing = false;
     } catch (error) {
         console.error("Failed to deserialize game state:", error);
         console.log(data);
         console.log(gameState);
+        isSyncing = false;
     }
 }
 
 // Sync state with server
 export async function syncStateToServer(gameState: GameState): Promise<void> {
     try {
+        // Prevent sync loops and unnecessary syncs
+        if (isSyncing || !hasStateChanged(gameState)) {
+            return;
+        }
+
+        isSyncing = true;
+        const stateData = serializeGameState(gameState);
         const response = await fetch("/api/state", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: serializeGameState(gameState),
+            body: stateData,
         });
         if (!response.ok) {
             throw new Error(`Failed to sync state: ${response.statusText}`);
         }
+        lastSyncedState = stateData;
+        // Reset local change tracking since we just synced our changes
+        lastLocalStateChange = 0;
+        isSyncing = false;
     } catch (error) {
         console.error("Failed to sync state to server:", error);
+        isSyncing = false;
     }
 }
 
@@ -96,6 +157,11 @@ export async function loadStateFromServer(
     overwriteState: boolean = true,
 ): Promise<void> {
     try {
+        // Prevent sync loops
+        if (isSyncing) {
+            return;
+        }
+
         const response = await fetch("/api/state");
         if (response.ok) {
             const data = await response.text();
@@ -110,6 +176,7 @@ export async function loadStateFromServer(
 
 // Auto-sync state after game-changing operations
 export async function autoSync(gameState: GameState): Promise<void> {
+    markLocalStateChange();
     await syncStateToServer(gameState);
 }
 
@@ -163,11 +230,23 @@ export async function initializeGameState(
 
     // fetch every second to keep state updated
     setInterval(() => {
+        // Skip loading if we're already syncing to prevent loops
+        if (isSyncing) {
+            return;
+        }
+
         // Skip loading if we're in an active movement phase for the local player
+        const isLocalPlayerActive =
+            gameState.currentPlayerIndex ===
+            gameState.players.findIndex(
+                (player) => player.name === gameState.localPlayer,
+            );
+
         if (
-            gameState.movementPhase?.active &&
-            gameState.movementPhase.playerName === gameState.localPlayer
+            isLocalPlayerActive &&
+            (gameState.movementPhase?.active || gameState.catchingPhase?.active)
         ) {
+            console.log("Skipping load during active movement phase");
             return;
         }
 

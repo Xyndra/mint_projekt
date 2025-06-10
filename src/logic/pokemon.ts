@@ -6,8 +6,9 @@ export type Pokemon = {
 
 // Cache for Pokemon API data
 const pokemonDataCache = new Map<number, any>();
+const pokemonSpeciesCache = new Map<number, any>();
 
-async function getPokemonData(dex_number: number): Promise<any> {
+export async function getPokemonData(dex_number: number): Promise<any> {
     if (pokemonDataCache.has(dex_number)) {
         return pokemonDataCache.get(dex_number);
     }
@@ -48,6 +49,31 @@ async function getMaxHealthDex(dex_number: number): Promise<number> {
 
 export async function getMaxHealth(pokemon: Pokemon): Promise<number> {
     return getMaxHealthDex(pokemon.dex_number);
+}
+
+async function getPokemonSpeciesData(dex_number: number): Promise<any> {
+    if (pokemonSpeciesCache.has(dex_number)) {
+        return pokemonSpeciesCache.get(dex_number);
+    }
+
+    const data = await fetch(`/api/pokemon-species/${dex_number}`).then(
+        (response) => response.json(),
+    );
+
+    pokemonSpeciesCache.set(dex_number, data);
+    return data;
+}
+
+export async function getPokemonNameGerman(pokemon: Pokemon): Promise<string> {
+    const data = await getPokemonData(pokemon.dex_number);
+    const speciesData = await getPokemonSpeciesData(pokemon.dex_number);
+
+    // Find German name in the names array
+    const germanName = speciesData.names?.find(
+        (name: any) => name.language.name === "de",
+    );
+
+    return germanName?.name || data.name || `Pokemon #${pokemon.dex_number}`;
 }
 
 export async function createPokemon(

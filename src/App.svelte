@@ -3,6 +3,7 @@
     import PokeBox from "./lib/PokeBox.svelte";
     import StartGameModal from "./lib/StartGameModal.svelte";
     import DiceModal from "./lib/DiceModal.svelte";
+    import CatchModal from "./lib/CatchModal.svelte";
     import MovementPhaseIndicator from "./lib/MovementPhaseIndicator.svelte";
 </script>
 
@@ -14,6 +15,7 @@
 
     <StartGameModal />
     <DiceModal />
+    <CatchModal />
     <MovementPhaseIndicator />
 </main>
 

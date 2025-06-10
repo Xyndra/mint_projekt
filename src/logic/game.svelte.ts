@@ -5,7 +5,6 @@ import {
     autoSync,
     initializeGameState,
     type SyncableGameState,
-    getTabId,
     saveLocalPlayer,
     loadLocalPlayer,
 } from "./sync";
@@ -36,6 +35,11 @@ export type GameState = {
         remainingMoves: number;
         playerName: string;
     };
+    catchingPhase?: {
+        active: boolean;
+        playerName: string;
+        wildPokemonDexNumber: number;
+    };
 };
 
 export var gameState: GameState = $state(
@@ -52,6 +56,7 @@ export var gameState: GameState = $state(
         },
         currentPlayerIndex: 0,
         movementPhase: undefined,
+        catchingPhase: undefined,
     }),
 );
 
@@ -61,10 +66,12 @@ export function setGameState(newState: SyncableGameState): void {
     gameState.hasStarted = newState.hasStarted;
     gameState.winner = newState.winner;
     gameState.movementPhase = newState.movementPhase;
+    gameState.catchingPhase = newState.catchingPhase;
 }
 
 $effect.root(() => {
     $effect(() => {
+        (window as any).gameState = gameState;
         autoSync(gameState);
     });
 });
@@ -202,6 +209,15 @@ export function endMovementPhase(): void {
                 currentPoint.oneTimeModifier(currentPlayer);
             }
         }
+
+        // Check if this is a catch point
+        if (currentPoint.kind === "catch") {
+            // Start catching phase instead of ending turn
+            const randomDexNumber = Math.floor(Math.random() * 1020) + 1; // Random Pokemon 1-1020
+            startCatchingPhase(currentPlayer.name, randomDexNumber);
+            return; // Don't end the turn yet
+        }
+
         if (currentPoint.multipleTimeModifier) {
             currentPoint.multipleTimeModifier(currentPlayer);
         }
@@ -215,9 +231,47 @@ export function endMovementPhase(): void {
         (gameState.currentPlayerIndex + 1) % gameState.players.length;
 }
 
+export function startCatchingPhase(
+    playerName: string,
+    wildPokemonDexNumber: number,
+): void {
+    gameState.movementPhase = undefined; // Clear movement phase
+    gameState.catchingPhase = {
+        active: true,
+        playerName,
+        wildPokemonDexNumber,
+    };
+}
+
+export function endCatchingPhase(): void {
+    if (!gameState.catchingPhase?.active) {
+        return;
+    }
+
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    const currentPoint = gameState.map.points.get(currentPlayer.position);
+
+    // Trigger any remaining point effects that might not have been triggered
+    if (currentPoint && currentPoint.multipleTimeModifier) {
+        currentPoint.multipleTimeModifier(currentPlayer);
+    }
+
+    // Clear catching phase
+    gameState.catchingPhase = undefined;
+
+    // Move to next player's turn
+    gameState.currentPlayerIndex =
+        (gameState.currentPlayerIndex + 1) % gameState.players.length;
+
+    // Trigger sync to ensure all players see the turn change
+    autoSync(gameState);
+}
+
 (window as any).doPlayerMove = doPlayerMove;
 (window as any).startMovementPhase = startMovementPhase;
 (window as any).endMovementPhase = endMovementPhase;
+(window as any).startCatchingPhase = startCatchingPhase;
+(window as any).endCatchingPhase = endCatchingPhase;
 
 export function resetGame() {
     gameState.players = [];
@@ -232,6 +286,7 @@ export function resetGame() {
     gameState.hasStarted = false;
     gameState.winner = undefined;
     gameState.movementPhase = undefined;
+    gameState.catchingPhase = undefined;
 }
 
 (window as any).resetGame = resetGame;
