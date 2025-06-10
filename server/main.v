@@ -5,6 +5,8 @@ import os
 import net.http
 
 pub struct App {
+mut:
+	state ?string
 }
 
 pub struct Context {
@@ -75,6 +77,21 @@ pub fn (app &App) index(mut ctx Context) veb.Result {
 @['/favicon.ico']
 pub fn (app &App) favicon(mut ctx Context) veb.Result {
 	return ctx.not_found()
+}
+
+@['/state'; get]
+pub fn (app &App) get_state(mut ctx Context) veb.Result {
+	if app.state == none {
+		ctx.res.set_status(.not_found)
+		return ctx.text('No state set')
+	}
+	return ctx.text(app.state or { '' })
+}
+
+@['/state'; put]
+pub fn (mut app App) post_state(mut ctx Context) veb.Result {
+	app.state = ctx.req.data
+	return ctx.text('State updated')
 }
 
 @['/no_cache/:path...']

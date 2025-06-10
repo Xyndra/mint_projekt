@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { gameState } from "../logic/game.svelte";
+    import { gameState, doPlayerMove } from "../logic/game.svelte";
     import type { MapPoint } from "../logic/mapPoints";
     import PlayerDisplay from "./PlayerDisplay.svelte";
 
@@ -12,11 +12,55 @@
     let players = $derived.by(() => {
         return gameState.players.filter((player) => player.position === id);
     });
+
+    let isClickable = $derived.by(() => {
+        if (!gameState.movementPhase?.active) return false;
+        if (gameState.movementPhase.playerName !== gameState.localPlayer)
+            return false;
+
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (!currentPlayer) return false;
+
+        const currentPoint = gameState.map.points.get(currentPlayer.position);
+        if (!currentPoint) return false;
+
+        // Can click on connected points (but not current position)
+        return (
+            currentPoint.connectedPoints.includes(id) &&
+            currentPlayer.position !== id
+        );
+    });
+
+    function handleClick() {
+        if (!isClickable) return;
+
+        try {
+            doPlayerMove(id);
+        } catch (error) {
+            console.error("Error making move:", error);
+        }
+    }
 </script>
 
 <div
     class="absolute pointer-events-auto"
-    style={`left: ${point.x * scale}px; top: ${point.y * scale}px;`}
+    class:cursor-pointer={isClickable}
+    class:animate-pulse={isClickable}
+    style={`left: ${point.x * scale}px; top: ${point.y * scale}px; ${isClickable ? "z-index: 10;" : ""}`}
+    {...isClickable
+        ? {
+              role: "button",
+              tabindex: 0,
+              "aria-label": `Move to ${point.city_name || point.kind}`,
+          }
+        : {}}
+    onclick={handleClick}
+    onkeydown={(e) => {
+        if (isClickable && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            handleClick();
+        }
+    }}
 >
     <div class="absolute z-[2]">
         {#each players as player}
@@ -48,6 +92,12 @@
     {#if point.kind === "city"}
         <div
             class="flex flex-col justify-center items-center border-black bg-[#fffc]"
+            class:ring-4={isClickable}
+            class:ring-blue-400={isClickable}
+            class:hover:bg-blue-50={isClickable}
+            class:hover:brightness-110={isClickable}
+            class:shadow-lg={isClickable}
+            class:shadow-blue-300={isClickable}
             style={`
                 margin-left: ${-150 * scale}px;
                 margin-top: ${-85 * scale}px;
@@ -55,6 +105,8 @@
                 border-width: ${2 * scale}px;
                 border-radius: 0 0 ${14 * scale}px ${14 * scale}px;
                 min-width: ${300 * scale}px;
+                transition: all 0.2s ease;
+                ${isClickable ? "transform: scale(1.05);" : ""}
             `}
         >
             <div
@@ -80,12 +132,20 @@
     {:else}
         <div
             class="aspect-square rounded-full flex justify-center items-center text-center text-white"
+            class:ring-4={isClickable}
+            class:ring-blue-400={isClickable}
+            class:hover:scale-110={isClickable}
+            class:hover:brightness-110={isClickable}
+            class:shadow-lg={isClickable}
+            class:shadow-blue-300={isClickable}
             style={`
                 background-color: ${point.color};
                 width: ${baseSize * scale}px;
                 height: ${baseSize * scale}px;
                 margin-left: ${-(baseSize * scale) / 2}px;
                 margin-top: ${-(baseSize * scale) / 2}px;
+                transition: all 0.2s ease;
+                ${isClickable ? "transform: scale(1.1); filter: brightness(1.2);" : ""}
             `}
         >
             {#if point.kind === "catch"}

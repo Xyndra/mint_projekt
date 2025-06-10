@@ -1,6 +1,9 @@
 <script lang="ts">
     import Map from "./lib/Map.svelte";
     import PokeBox from "./lib/PokeBox.svelte";
+    import StartGameModal from "./lib/StartGameModal.svelte";
+    import DiceModal from "./lib/DiceModal.svelte";
+    import MovementPhaseIndicator from "./lib/MovementPhaseIndicator.svelte";
 </script>
 
 <main>
@@ -8,6 +11,10 @@
         <Map />
         <PokeBox />
     </div>
+
+    <StartGameModal />
+    <DiceModal />
+    <MovementPhaseIndicator />
 </main>
 
 <style>
