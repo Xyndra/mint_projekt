@@ -96,6 +96,16 @@ export function setGameState(newState: SyncableGameState): void {
 $effect.root(() => {
     $effect(() => {
         (window as any).gameState = gameState;
+        if (
+            gameState.dicePhase === undefined &&
+            gameState.movementPhase === undefined &&
+            gameState.catchingPhase === undefined &&
+            gameState.fightingPhase === undefined
+        ) {
+            startDicePhase(
+                gameState.players[gameState.currentPlayerIndex].name,
+            );
+        }
         autoSync(gameState);
     });
 });

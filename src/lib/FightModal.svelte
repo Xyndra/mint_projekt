@@ -6,11 +6,6 @@
         checkAndExecuteFight,
         continueAfterFight,
     } from "../logic/phases/fightingPhase";
-    import {
-        getPokemonNameGerman,
-        getAttackPower,
-        getMaxHealth,
-    } from "../logic/pokemon";
     import PokemonDisplay from "./PokemonDisplay.svelte";
 
     let modal: HTMLDialogElement;
@@ -91,20 +86,6 @@
             confirmOpponentSelection();
         } catch (error) {
             console.error("Error confirming opponents:", error);
-        }
-    }
-
-    async function getPokemonStats(pokemon: any) {
-        try {
-            const [name, attack, maxHealth] = await Promise.all([
-                getPokemonNameGerman(pokemon),
-                getAttackPower(pokemon),
-                getMaxHealth(pokemon),
-            ]);
-            return { name, attack, maxHealth };
-        } catch (error) {
-            console.error("Error fetching Pokemon stats:", error);
-            return null;
         }
     }
 
@@ -317,7 +298,7 @@
             <div class="mb-6">
                 <h3 class="text-lg font-semibold mb-3">Wähle dein Pokemon:</h3>
                 <div
-                    class="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-96 overflow-y-auto"
+                    class="grid grid-cols-2 md:grid-cols-3 gap-4 h-96 overflow-y-auto"
                 >
                     {#each currentPlayer.pokemons as pokemon, index}
                         {#if pokemon.health > 0}
@@ -325,29 +306,8 @@
                                 class="p-4 border rounded-lg hover:bg-gray-50 transition-colors border-gray-300"
                                 onclick={() => handlePokemonSelect(index)}
                             >
-                                <div class="flex flex-col items-center">
+                                <div class="w-full h-full">
                                     <PokemonDisplay {pokemon} />
-                                    <div class="mt-2 text-center w-full">
-                                        {#await getPokemonStats(pokemon)}
-                                            <div>Lade...</div>
-                                        {:then stats}
-                                            <div class="font-semibold">
-                                                {stats?.name ||
-                                                    `Pokemon #${pokemon.dex_number}`}
-                                            </div>
-                                            <div class="text-sm text-gray-600">
-                                                Attack: {stats?.attack || 0}
-                                            </div>
-                                            <div class="text-sm text-green-600">
-                                                HP: {pokemon.health}/{stats?.maxHealth ||
-                                                    pokemon.health}
-                                            </div>
-                                        {:catch error}
-                                            <div class="text-red-500">
-                                                Fehler beim Laden
-                                            </div>
-                                        {/await}
-                                    </div>
                                 </div>
                             </button>
                         {/if}
@@ -396,27 +356,6 @@
                                         {fighter!.name}
                                     </div>
                                     <PokemonDisplay {pokemon} />
-                                    <div class="mt-2 text-sm">
-                                        {#await getPokemonStats(pokemon)}
-                                            <div>Lade...</div>
-                                        {:then stats}
-                                            <div class="font-semibold">
-                                                {stats?.name ||
-                                                    `Pokemon #${pokemon.dex_number}`}
-                                            </div>
-                                            <div class="text-gray-600">
-                                                Attack: {stats?.attack || 0}
-                                            </div>
-                                            <div class="text-green-600">
-                                                HP: {pokemon.health}/{stats?.maxHealth ||
-                                                    pokemon.health}
-                                            </div>
-                                        {:catch error}
-                                            <div class="text-red-500">
-                                                Fehler beim Laden
-                                            </div>
-                                        {/await}
-                                    </div>
                                 </div>
                             {/if}
                         {/if}

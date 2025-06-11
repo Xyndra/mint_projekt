@@ -12,27 +12,24 @@
     let modal: HTMLDialogElement;
     let catchingInProgress = $state(false);
     let catchResult: "success" | "failure" | null = $state(null);
-    let caughtPokemon: any = $state(null);
-    let wildPokemonDexNumber = $state(0);
+    let pokemonDexNumber = $state(0);
 
-    let wildPokemon: Pokemon | null = $state(null);
+    let catchingPokemon: Pokemon | null = $state(null);
     let showResult = $state(false);
     let pokemonGermanName = $state("");
 
     export async function openModal(dexNumber: number) {
-        wildPokemonDexNumber = dexNumber;
+        pokemonDexNumber = dexNumber;
         catchResult = null;
-        caughtPokemon = null;
         showResult = false;
         catchingInProgress = false;
 
-        wildPokemon = null;
+        catchingPokemon = null;
 
-        // Create a temporary Pokemon for display purposes
         try {
-            wildPokemon = await createPokemon(dexNumber);
-            if (wildPokemon) {
-                pokemonGermanName = await getPokemonNameGerman(wildPokemon);
+            catchingPokemon = await createPokemon(dexNumber);
+            if (catchingPokemon) {
+                pokemonGermanName = await getPokemonNameGerman(catchingPokemon);
             }
         } catch (error) {
             console.error("Error fetching Pokemon data:", error);
@@ -51,7 +48,7 @@
 
     async function attemptCatch() {
         if (catchingInProgress) return;
-        if (!wildPokemon) {
+        if (!catchingPokemon) {
             console.error("Wild Pokemon is not available");
             return;
         }
@@ -72,13 +69,13 @@
                         gameState.players[gameState.currentPlayerIndex];
                     if (currentPlayer) {
                         console.log(
-                            `Adding Pokemon #${wildPokemonDexNumber} to ${currentPlayer.name}'s team`,
+                            `Adding Pokemon #${pokemonDexNumber} to ${currentPlayer.name}'s team`,
                         );
                         console.log(
                             `Team before:`,
                             currentPlayer.pokemons.length,
                         );
-                        currentPlayer.pokemons.push(wildPokemon!);
+                        currentPlayer.pokemons.push(catchingPokemon!);
                         console.log(
                             `Team after:`,
                             currentPlayer.pokemons.length,
@@ -137,9 +134,9 @@
 
         <!-- Pokemon Display -->
         <div class="flex flex-col items-center mb-6">
-            {#if wildPokemon}
+            {#if catchingPokemon}
                 <div class="pokemon-display-container mb-4">
-                    <PokemonDisplay pokemon={wildPokemon} />
+                    <PokemonDisplay pokemon={catchingPokemon} />
                 </div>
             {:else}
                 <div class="pokemon-container mb-4">
@@ -147,16 +144,46 @@
                 </div>
             {/if}
             <h3 class="text-xl font-semibold">
-                {pokemonGermanName || `Pokemon #${wildPokemonDexNumber}`}
+                {pokemonGermanName || `Pokemon #${pokemonDexNumber}`}
             </h3>
-            <p class="text-sm text-base-content/70">#{wildPokemonDexNumber}</p>
+            <p class="text-sm text-base-content/70">#{pokemonDexNumber}</p>
         </div>
 
         <!-- Catching Animation -->
         {#if catchingInProgress}
             <div class="text-center mb-6">
                 <div class="pokeball-animation mb-4">
-                    <div class="pokeball">🟤</div>
+                    <div class="pokeball">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            class="w-16 h-16"
+                        >
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                fill="#fff"
+                                stroke="#000"
+                                stroke-width="2"
+                            />
+                            <!-- red upper half -->
+                            <path
+                                d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z"
+                                fill="#ff0000"
+                            />
+                            <circle cx="12" cy="12" r="4" fill="#000" />
+                            <line
+                                x1="2"
+                                y1="12"
+                                x2="22"
+                                y2="12"
+                                stroke="#000"
+                                stroke-width="2"
+                            />
+                            <circle cx="12" cy="12" r="2" fill="#fff" />
+                        </svg>
+                    </div>
                 </div>
                 <p class="text-lg">Fangversuch läuft...</p>
             </div>
@@ -169,13 +196,15 @@
                     <div class="success-animation mb-4">
                         <div class="text-6xl">✨</div>
                     </div>
-                    <div class="alert alert-success">
+                    <div
+                        class="alert alert-success flex flex-col items-center gap-2"
+                    >
                         <span class="text-lg font-bold">Gefangen!</span>
                         <p>
                             Du hast {pokemonGermanName ||
-                                `Pokemon #${wildPokemonDexNumber}`} erfolgreich gefangen!
+                                `Pokemon #${pokemonDexNumber}`} erfolgreich gefangen!
                         </p>
-                        {#if caughtPokemon?.shiny}
+                        {#if catchingPokemon?.shiny}
                             <p class="text-yellow-400 font-bold">
                                 ✨ Es ist ein Shiny! ✨
                             </p>
@@ -189,7 +218,7 @@
                         <span class="text-lg font-bold">Entkommen!</span>
                         <p>
                             {pokemonGermanName ||
-                                `Pokemon #${wildPokemonDexNumber}`} ist entkommen!
+                                `Pokemon #${pokemonDexNumber}`} ist entkommen!
                         </p>
                     </div>
                 {/if}
