@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { gameState, doPlayerMove } from "../logic/game.svelte";
+    import { gameState } from "../logic/game.svelte";
+    import { doPlayerMove } from "../logic/phases/movementPhase";
     import type { MapPoint } from "../logic/mapPoints";
     import PlayerDisplay from "./PlayerDisplay.svelte";
 

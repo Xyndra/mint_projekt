@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { endCatchingPhase, gameState } from "../logic/game.svelte";
+    import { gameState } from "../logic/game.svelte";
+    import { endCatchingPhase } from "../logic/phases/catchingPhase";
     import {
         createPokemon,
         getPokemonNameGerman,

@@ -1,4 +1,8 @@
 import { type GameState, gameState, setGameState } from "./game.svelte";
+import {
+    checkAndExecuteFight,
+    fixStuckFightState,
+} from "./phases/fightingPhase";
 
 // Generate unique tab identifier
 function generateTabId(): string {
@@ -51,8 +55,10 @@ function serializeGameState(gameState: GameState): string {
         currentPlayerIndex: gameState.currentPlayerIndex,
         hasStarted: gameState.hasStarted,
         winner: gameState.winner,
+        dicePhase: gameState.dicePhase,
         movementPhase: gameState.movementPhase,
         catchingPhase: gameState.catchingPhase,
+        fightingPhase: gameState.fightingPhase,
     };
     return JSON.stringify(syncableState);
 }
@@ -107,8 +113,10 @@ function deserializeGameState(
             gameState.currentPlayerIndex = syncableState.currentPlayerIndex;
             gameState.hasStarted = syncableState.hasStarted;
             gameState.winner = syncableState.winner;
+            gameState.dicePhase = syncableState.dicePhase;
             gameState.movementPhase = syncableState.movementPhase;
             gameState.catchingPhase = syncableState.catchingPhase;
+            gameState.fightingPhase = syncableState.fightingPhase;
         }
         lastSyncedState = data;
         lastSyncFromServer = Date.now();
@@ -235,22 +243,25 @@ export async function initializeGameState(
             return;
         }
 
-        // Skip loading if we're in an active movement phase for the local player
+        // Skip loading if we're in an active phase for the local player
         const isLocalPlayerActive =
             gameState.currentPlayerIndex ===
             gameState.players.findIndex(
                 (player) => player.name === gameState.localPlayer,
             );
 
-        if (
-            isLocalPlayerActive &&
-            (gameState.movementPhase?.active || gameState.catchingPhase?.active)
-        ) {
-            console.log("Skipping load during active movement phase");
+        // Allow syncing during fights, but skip during other active phases
+        if (isLocalPlayerActive && !gameState.fightingPhase?.active) {
+            console.log("Skipping load during active phase");
             return;
         }
 
         loadStateFromServer(gameState);
+
+        // Check for stuck fighting phase and recover
+        if (gameState.fightingPhase?.active) {
+            checkAndExecuteFight();
+        }
 
         // Also validate local player periodically
         if (gameState.localPlayer) {
@@ -294,3 +305,7 @@ export { getTabId, saveLocalPlayer, loadLocalPlayer };
     saveLocalPlayer(undefined);
     gameState.localPlayer = undefined;
 };
+
+// Debug functions for fighting phase
+(window as any).fixStuckFightState = fixStuckFightState;
+(window as any).checkAndExecuteFight = () => checkAndExecuteFight();

@@ -37,13 +37,16 @@ async function getMaxHealthDex(dex_number: number): Promise<number> {
     var data = await getPokemonData(dex_number);
 
     // calculate hp + def + spdef / 40
-    return Math.round(
-        Math.sqrt(
-            ((parseInt(data.stats[0].base_stat) || 0) * // hp
-                ((parseInt(data.stats[2].base_stat) || 0) + // def
-                    (parseInt(data.stats[4].base_stat) || 0))) /
-                40,
-        ) / 3,
+    return Math.max(
+        Math.round(
+            Math.sqrt(
+                ((parseInt(data.stats[0].base_stat) || 0) * // hp
+                    ((parseInt(data.stats[2].base_stat) || 0) + // def
+                        (parseInt(data.stats[4].base_stat) || 0))) /
+                    40,
+            ) / 3,
+        ),
+        1,
     );
 }
 

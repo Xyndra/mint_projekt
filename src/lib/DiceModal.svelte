@@ -1,17 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import {
-        gameState,
-        startMovementPhase,
-        endMovementPhase,
-    } from "../logic/game.svelte";
+    import { gameState } from "../logic/game.svelte";
+    import { setDiceResults, endDicePhase } from "../logic/phases/dicePhase";
 
     let modal: HTMLDialogElement;
     let diceCount = $state(1);
     let diceResults: number[] = $state([]);
     let isRolling = $state(false);
     let showResults = $state(false);
-    let hasOpenedForCurrentTurn = $state(false);
     let hasRolledThisTurn = $state(false);
 
     export function openModal() {
@@ -44,6 +40,13 @@
             isRolling = false;
             showResults = true;
             hasRolledThisTurn = true;
+
+            // Set dice results in game state
+            try {
+                setDiceResults(results);
+            } catch (error) {
+                console.error("Error setting dice results:", error);
+            }
         }, 1200);
     }
 
@@ -56,12 +59,12 @@
         return diceResults.reduce((sum, value) => sum + value, 0);
     }
 
-    function handleMoveSelection(steps: number) {
+    function handleMoveSelection() {
         try {
-            startMovementPhase(steps);
+            endDicePhase();
             closeModal();
         } catch (error) {
-            console.error("Error starting movement phase:", error);
+            console.error("Error ending dice phase:", error);
         }
     }
 
@@ -76,31 +79,30 @@
         resetDice();
     });
 
-    // Auto-open modal when it's the local player's turn
+    // Auto-open modal when dice phase is active for local player
     $effect(() => {
-        if (gameState.hasStarted && gameState.localPlayer) {
-            const currentPlayer =
-                gameState.players[gameState.currentPlayerIndex];
-
-            if (
-                currentPlayer?.name === gameState.localPlayer &&
-                modal &&
-                !modal.open &&
-                !hasOpenedForCurrentTurn &&
-                !gameState.movementPhase?.active
-            ) {
-                openModal();
-                hasOpenedForCurrentTurn = true;
-                resetDice();
-            }
+        if (
+            gameState.dicePhase?.active &&
+            gameState.dicePhase.playerName === gameState.localPlayer &&
+            modal &&
+            !modal.open
+        ) {
+            openModal();
+            resetDice();
+        } else if (
+            (!gameState.dicePhase?.active ||
+                gameState.dicePhase.playerName !== gameState.localPlayer) &&
+            modal &&
+            modal.open
+        ) {
+            closeModal();
         }
     });
 
-    // Reset turn flags when turn changes
+    // Reset dice state when dice phase ends
     $effect(() => {
-        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-        if (currentPlayer?.name !== gameState.localPlayer) {
-            hasOpenedForCurrentTurn = false;
+        if (!gameState.dicePhase?.active) {
+            resetDice();
         }
     });
 </script>
@@ -172,7 +174,7 @@
             {#if showResults && diceResults.length > 0}
                 <button
                     class="btn btn-success"
-                    onclick={() => handleMoveSelection(getTotalSum())}
+                    onclick={() => handleMoveSelection()}
                 >
                     Bewegungsphase starten ({getTotalSum()} Schritte)
                 </button>

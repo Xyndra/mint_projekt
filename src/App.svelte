@@ -4,6 +4,7 @@
     import StartGameModal from "./lib/StartGameModal.svelte";
     import DiceModal from "./lib/DiceModal.svelte";
     import CatchModal from "./lib/CatchModal.svelte";
+    import FightModal from "./lib/FightModal.svelte";
     import MovementPhaseIndicator from "./lib/MovementPhaseIndicator.svelte";
 </script>
 
@@ -16,6 +17,7 @@
     <StartGameModal />
     <DiceModal />
     <CatchModal />
+    <FightModal />
     <MovementPhaseIndicator />
 </main>
 

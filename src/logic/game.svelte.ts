@@ -8,6 +8,7 @@ import {
     saveLocalPlayer,
     loadLocalPlayer,
 } from "./sync";
+import { startDicePhase } from "./phases/dicePhase";
 
 type Item = "potion" | "revive" | "berry";
 
@@ -30,6 +31,12 @@ export type GameState = {
     currentPlayerIndex: number;
     hasStarted?: boolean;
     winner?: Player;
+    dicePhase?: {
+        active: boolean;
+        playerName: string;
+        diceResults?: number[];
+        totalMoves?: number;
+    };
     movementPhase?: {
         active: boolean;
         remainingMoves: number;
@@ -39,6 +46,19 @@ export type GameState = {
         active: boolean;
         playerName: string;
         wildPokemonDexNumber: number;
+    };
+    fightingPhase?: {
+        active: boolean;
+        fighters: string[]; // Array of player names involved in the fight
+        initiator: string; // Player who landed on the space
+        selectedPokemon: Record<string, number>; // Map of player name to selected pokemon index
+        battleLog: string[];
+        awaitingSelection: string[]; // Players who haven't selected a Pokemon yet
+        opponentSelectionPhase?: {
+            active: boolean;
+            availableOpponents: string[];
+            selectedOpponents: string[];
+        };
     };
 };
 
@@ -55,8 +75,10 @@ export var gameState: GameState = $state(
             ),
         },
         currentPlayerIndex: 0,
+        dicePhase: undefined,
         movementPhase: undefined,
         catchingPhase: undefined,
+        fightingPhase: undefined,
     }),
 );
 
@@ -65,8 +87,10 @@ export function setGameState(newState: SyncableGameState): void {
     gameState.currentPlayerIndex = newState.currentPlayerIndex;
     gameState.hasStarted = newState.hasStarted;
     gameState.winner = newState.winner;
+    gameState.dicePhase = newState.dicePhase;
     gameState.movementPhase = newState.movementPhase;
     gameState.catchingPhase = newState.catchingPhase;
+    gameState.fightingPhase = newState.fightingPhase;
 }
 
 $effect.root(() => {
@@ -118,160 +142,15 @@ export function startGame(): void {
         throw new Error("Not enough players to start the game");
     }
     gameState.hasStarted = true;
+
+    // Start the first player's turn with dice phase
+    const firstPlayer = gameState.players[gameState.currentPlayerIndex];
+    startDicePhase(firstPlayer.name);
+
     autoSync(gameState);
 }
 
 (window as any).startGame = startGame;
-
-export function startMovementPhase(moves: number): void {
-    if (!gameState.hasStarted) {
-        throw new Error("Game has not started yet");
-    }
-
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    if (currentPlayer.name !== gameState.localPlayer) {
-        throw new Error("It's not your turn");
-    }
-
-    gameState.movementPhase = {
-        active: true,
-        remainingMoves: moves,
-        playerName: currentPlayer.name,
-    };
-}
-
-export function doPlayerMove(newPosition: number): void {
-    if (!gameState.hasStarted) {
-        throw new Error("Game has not started yet");
-    }
-
-    if (!gameState.movementPhase?.active) {
-        throw new Error("Not in movement phase");
-    }
-
-    // check if player index is currentPlayerIndex
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    if (currentPlayer.name !== gameState.localPlayer) {
-        throw new Error("It's not your turn");
-    }
-
-    if (gameState.movementPhase.playerName !== currentPlayer.name) {
-        throw new Error("Not your movement phase");
-    }
-
-    // Check for valid player and position
-    if (!currentPlayer) {
-        throw new Error("Player not found");
-    } else if (newPosition < 0 || newPosition >= gameState.map.points.size) {
-        throw new Error("Invalid position");
-    }
-
-    const currentPoint = gameState.map.points.get(currentPlayer.position);
-    const targetPoint = gameState.map.points.get(newPosition);
-
-    if (!currentPoint) {
-        throw new Error("No map point found at the current position");
-    } else if (!targetPoint) {
-        throw new Error("No map point found at the target position");
-    } else if (!currentPoint.connectedPoints.includes(newPosition)) {
-        throw new Error(
-            "Target position is not connected to the current position",
-        );
-    }
-
-    // Move the player
-    currentPlayer.position = newPosition;
-    gameState.movementPhase.remainingMoves--;
-
-    console.log(
-        `Moved to position ${newPosition}, ${gameState.movementPhase.remainingMoves} moves remaining`,
-    );
-
-    // Check if movement phase is complete
-    if (gameState.movementPhase.remainingMoves <= 0) {
-        endMovementPhase();
-    }
-}
-
-export function endMovementPhase(): void {
-    if (!gameState.movementPhase?.active) {
-        return;
-    }
-
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    const currentPoint = gameState.map.points.get(currentPlayer.position);
-
-    if (currentPoint) {
-        // Trigger point effects
-        if (!currentPoint.alreadyVisited.includes(currentPlayer.name)) {
-            currentPoint.alreadyVisited.push(currentPlayer.name);
-            if (currentPoint.oneTimeModifier) {
-                currentPoint.oneTimeModifier(currentPlayer);
-            }
-        }
-
-        // Check if this is a catch point
-        if (currentPoint.kind === "catch") {
-            // Start catching phase instead of ending turn
-            const randomDexNumber = Math.floor(Math.random() * 1020) + 1; // Random Pokemon 1-1020
-            startCatchingPhase(currentPlayer.name, randomDexNumber);
-            return; // Don't end the turn yet
-        }
-
-        if (currentPoint.multipleTimeModifier) {
-            currentPoint.multipleTimeModifier(currentPlayer);
-        }
-    }
-
-    // Clear movement phase
-    gameState.movementPhase = undefined;
-
-    // Move to next player's turn
-    gameState.currentPlayerIndex =
-        (gameState.currentPlayerIndex + 1) % gameState.players.length;
-}
-
-export function startCatchingPhase(
-    playerName: string,
-    wildPokemonDexNumber: number,
-): void {
-    gameState.movementPhase = undefined; // Clear movement phase
-    gameState.catchingPhase = {
-        active: true,
-        playerName,
-        wildPokemonDexNumber,
-    };
-}
-
-export function endCatchingPhase(): void {
-    if (!gameState.catchingPhase?.active) {
-        return;
-    }
-
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    const currentPoint = gameState.map.points.get(currentPlayer.position);
-
-    // Trigger any remaining point effects that might not have been triggered
-    if (currentPoint && currentPoint.multipleTimeModifier) {
-        currentPoint.multipleTimeModifier(currentPlayer);
-    }
-
-    // Clear catching phase
-    gameState.catchingPhase = undefined;
-
-    // Move to next player's turn
-    gameState.currentPlayerIndex =
-        (gameState.currentPlayerIndex + 1) % gameState.players.length;
-
-    // Trigger sync to ensure all players see the turn change
-    autoSync(gameState);
-}
-
-(window as any).doPlayerMove = doPlayerMove;
-(window as any).startMovementPhase = startMovementPhase;
-(window as any).endMovementPhase = endMovementPhase;
-(window as any).startCatchingPhase = startCatchingPhase;
-(window as any).endCatchingPhase = endCatchingPhase;
 
 export function resetGame() {
     gameState.players = [];
@@ -285,8 +164,32 @@ export function resetGame() {
     gameState.currentPlayerIndex = 0;
     gameState.hasStarted = false;
     gameState.winner = undefined;
+    gameState.dicePhase = undefined;
     gameState.movementPhase = undefined;
     gameState.catchingPhase = undefined;
+    gameState.fightingPhase = undefined;
 }
 
 (window as any).resetGame = resetGame;
+
+export function endTurn() {
+    if (!gameState.hasStarted) {
+        throw new Error("Game has not started yet");
+    }
+
+    // Clear current phases
+    gameState.dicePhase = undefined;
+    gameState.movementPhase = undefined;
+    gameState.catchingPhase = undefined;
+    gameState.fightingPhase = undefined;
+
+    // Move to next player's turn
+    gameState.currentPlayerIndex =
+        (gameState.currentPlayerIndex + 1) % gameState.players.length;
+
+    // Start dice phase for the next player
+    const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+    startDicePhase(nextPlayer.name);
+
+    autoSync(gameState);
+}

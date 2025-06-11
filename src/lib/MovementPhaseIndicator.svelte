@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { gameState, endMovementPhase } from "../logic/game.svelte";
+    import { gameState } from "../logic/game.svelte";
+    import { endMovementPhase } from "../logic/phases/movementPhase";
 
     let isVisible = $derived.by(() => {
         return (
@@ -16,19 +17,6 @@
 {#if isVisible}
     <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
         <div class="alert alert-info shadow-lg max-w-md">
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                class="stroke-current shrink-0 w-6 h-6"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                ></path>
-            </svg>
             <div class="flex-1">
                 <h3 class="font-bold">Bewegungsphase</h3>
                 <div class="text-sm">
